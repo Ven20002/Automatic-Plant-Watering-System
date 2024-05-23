@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plot data.txt</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            width: 400px;
+            height: 300px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sensor Data Plots</h1>
+    <div class="chart-container"><canvas id="chart1"></canvas></div>
+    <div class="chart-container"><canvas id="chart2"></canvas></div>
+    <div class="chart-container"><canvas id="chart3"></canvas></div>
+    <div class="chart-container"><canvas id="chart4"></canvas></div>
+    <div class="chart-container"><canvas id="chart5"></canvas></div>
+
+    <button onclick="resetData()">Reset Data</button>
+
+    <script>
+        async function fetchFileContent() {
+            try {
+                const response = await fetch('/data.txt');
+                if (response.ok) {
+                    const text = await response.text();
+                    processAndPlotData(text);
+                } else {
+                    console.error('Failed to load file.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function processAndPlotData(data) {
+            const lines = data.trim().split('\n');
+            const sensorData = lines.map(line => line.split(',').map(Number));
+            
+            const labels = sensorData.map((_, index) => index + 1);
+            
+            const data1 = sensorData.map(row => row[0]);
+            const data2 = sensorData.map(row => row[1]);
+            const data3 = sensorData.map(row => row[2]);
+            const data4 = sensorData.map(row => row[3]);
+            const data5 = sensorData.map(row => row[4]);
+
+            plotData('chart1', labels, data1, 'HumidVal');
+            plotData('chart2', labels, data2, 'TempVal');
+            plotData('chart3', labels, data3, 'LightVal');
+            plotData('chart4', labels, data4, 'MositVal');
+            plotData('chart5', labels, data5, 'MotorPower');
+        }
+
+        function plotData(canvasId, labels, data, label) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        async function resetData() {
+            try {
+                const response = await fetch('/reset-data');
+                if (response.ok) {
+                    console.log('Data reset successful');
+                    location.reload(); // Refresh page to update plots
+                } else {
+                    console.error('Failed to reset data.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        fetchFileContent();
+    </script>
+</body>
+</html>
